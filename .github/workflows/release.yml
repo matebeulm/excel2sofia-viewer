@@ -159,6 +159,7 @@ jobs:
             "excel2sofia-viewer-$TARGET/excel2sofia-viewer"
           cp "icons/icon.icns" "$APP/Contents/Resources/"
           sed "s/{{VERSION}}/$VERSION/g" macos/Info.plist > "$APP/Contents/Info.plist"
+          codesign --force --deep --sign - "$APP"
           hdiutil create \
             -volname "excel2sofia-viewer" \
             -srcfolder "$APP" \

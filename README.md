@@ -16,9 +16,14 @@ Download the latest release for your platform from the [Releases](https://github
 
 | Platform | Installer |
 |----------|-----------|
-| macOS    | `.pkg` |
+| macOS    | `.dmg` |
 | Windows  | `.msi` |
 | Linux    | `.tar.xz` |
+
+> **macOS note:** The app is not notarized. If macOS says the file is damaged, run:
+> ```
+> xattr -cr /Applications/excel2sofia-viewer.app
+> ```
 
 Alternatively, build from source (requires [Rust](https://rustup.rs)):
 
