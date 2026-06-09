@@ -14,6 +14,12 @@ A desktop viewer for output files produced by [excel2sofia](https://github.com/m
 
 Download the latest release for your platform from the [Releases](https://github.com/matebeulm/excel2sofia-viewer/releases) page.
 
+| Platform | Installer |
+|----------|-----------|
+| macOS    | `.pkg` |
+| Windows  | `.msi` |
+| Linux    | `.tar.xz` |
+
 Alternatively, build from source (requires [Rust](https://rustup.rs)):
 
 ```
@@ -51,6 +57,9 @@ On first run, a `config.toml` is created automatically at the platform config di
 Example config:
 
 ```toml
+# Line width in pixels
+line_width = 3.0
+
 # File extensions shown in the open dialog
 file_extensions = ["dat"]
 
