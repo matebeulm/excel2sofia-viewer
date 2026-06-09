@@ -1,0 +1,19 @@
+# line_width is reserved for future use (iced_plot does not yet expose this)
+line_width = 3.0
+
+# File extensions shown in the open dialog
+file_extensions = ["dat"]
+
+# Palette: list of [r, g, b] entries in 0.0–1.0 range. Repeats after the last entry.
+palette = [
+  [0.122, 0.467, 0.706],  # blue
+  [1.000, 0.498, 0.055],  # orange
+  [0.173, 0.627, 0.173],  # green
+  [0.839, 0.153, 0.157],  # red
+  [0.580, 0.404, 0.741],  # purple
+  [0.549, 0.337, 0.294],  # brown
+  [0.890, 0.467, 0.761],  # pink
+  [0.498, 0.498, 0.498],  # gray
+  [0.737, 0.741, 0.133],  # olive
+  [0.090, 0.745, 0.812],  # cyan
+]
