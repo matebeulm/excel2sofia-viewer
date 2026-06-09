@@ -1,24 +1,13 @@
-// Source - https://stackoverflow.com/a/29764309
-// Posted by ArtemGr, modified by community. See post 'Timeline' for change history
-// Retrieved 2026-06-09, License - CC BY-SA 4.0
-
 #![windows_subsystem = "windows"]
 
 use std::path::Path;
 
-use iced::{
-    Element,
-    Length::Fill,
-    Task,
-    widget::{button, column},
-};
-use iced_plot::{LineStyle, MarkerStyle, PlotUiMessage, PlotWidget, PlotWidgetBuilder, Series, ShapeId};
+use eframe::egui;
+use egui_plot::{Legend, Line, Plot, PlotPoints};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 struct Config {
-    /// Reserved for future use — iced_plot does not yet expose line width.
-    #[allow(dead_code)]
     line_width: f32,
     file_extensions: Vec<String>,
     palette: Vec<[f32; 3]>,
@@ -69,116 +58,130 @@ fn load_config() -> Config {
     }
 }
 
-fn main() -> iced::Result {
-    iced::application(App::new, App::update, App::view)
-        .title("excel2sofia viewer")
-        .font(include_bytes!("../fonts/FiraCodeNerdFont-Regular.ttf"))
-        .default_font(iced::Font::with_name("FiraCode Nerd Font"))
-        .run()
+struct Series {
+    name: String,
+    points: Vec<[f64; 2]>,
+    color: egui::Color32,
 }
 
 struct App {
-    plot: PlotWidget,
-    series_ids: Vec<ShapeId>,
+    series: Vec<Series>,
     config: Config,
-}
-
-#[derive(Debug, Clone)]
-enum Message {
-    Plot(PlotUiMessage),
-    OpenFile,
-    FilesLoaded(Vec<(String, Vec<[f64; 2]>)>),
+    reset_bounds: bool,
 }
 
 impl App {
-    fn new() -> (Self, Task<Message>) {
-        let config = load_config();
-        let plot = PlotWidgetBuilder::new()
-            .with_x_label("wavelength")
-            .with_y_label("value")
-            .with_crosshairs(true)
-            .with_cursor_overlay(true)
-            .with_cursor_provider(|x, y| format!("X: {x:.1}  Y: {y:.4}"))
-            .with_hover_radius_px(20.0)
-            .with_hover_highlight_provider(|ctx, point| {
-                point.marker_style = Some(MarkerStyle::circle(6.0));
-                Some(format!("{}\nX: {:.1}  Y: {:.4}", ctx.series_label, point.x, point.y))
-            })
-            .with_autoscale_on_updates(true)
-            .build()
-            .unwrap();
-        (App { plot, series_ids: Vec::new(), config }, Task::none())
-    }
-
-    fn update(&mut self, message: Message) -> Task<Message> {
-        match message {
-            Message::Plot(m) => {
-                self.plot.update(m);
-                Task::none()
-            }
-            Message::OpenFile => {
-                let exts: Vec<&str> = self.config.file_extensions.iter().map(String::as_str).collect();
-                if let Some(paths) = rfd::FileDialog::new()
-                    .add_filter("data files", &exts)
-                    .pick_files()
-                {
-                    let mut loaded: Vec<(String, Vec<[f64; 2]>)> = paths
-                        .iter()
-                        .filter_map(|p| {
-                            let name = p.file_stem()?.to_string_lossy().into_owned();
-                            let data = load_dat(p).ok()?;
-                            Some((name, data))
-                        })
-                        .collect();
-                    // iced_plot switches to GPU picking above 5000 total points (broken on
-                    // macOS Metal). Downsample proportionally to stay under the threshold.
-                    const CPU_PICK_THRESHOLD: usize = 4800;
-                    let total: usize = loaded.iter().map(|(_, d)| d.len()).sum();
-                    if total > CPU_PICK_THRESHOLD {
-                        let keep = (CPU_PICK_THRESHOLD / loaded.len()).max(1);
-                        for (_, data) in &mut loaded {
-                            if data.len() > keep {
-                                let step = (data.len() as f64 / keep as f64).ceil() as usize;
-                                *data = data.iter().copied().step_by(step).collect();
-                            }
-                        }
-                    }
-                    if !loaded.is_empty() {
-                        return Task::done(Message::FilesLoaded(loaded));
-                    }
-                }
-                Task::none()
-            }
-            Message::FilesLoaded(files) => {
-                for id in &self.series_ids {
-                    let _ = self.plot.remove_series(id);
-                }
-                self.series_ids.clear();
-                let palette = &self.config.palette;
-                for (i, (name, data)) in files.into_iter().enumerate() {
-                    let color = palette[i % palette.len()];
-                    let series = Series::line_only(data, LineStyle::Solid)
-                        .with_label(&name)
-                        .with_color(color);
-                    self.series_ids.push(series.id);
-                    let _ = self.plot.add_series(series);
-                }
-                Task::none()
-            }
+    fn new() -> Self {
+        App {
+            series: Vec::new(),
+            config: load_config(),
+            reset_bounds: false,
         }
     }
 
-    fn view(&self) -> Element<'_, Message> {
-        column![
-            button("Open .dat files").on_press(Message::OpenFile),
-            self.plot.view().map(Message::Plot),
-        ]
-        .spacing(10)
-        .padding(10)
-        .width(Fill)
-        .height(Fill)
-        .into()
+    fn open_files(&mut self) {
+        let exts: Vec<&str> = self.config.file_extensions.iter().map(String::as_str).collect();
+        let Some(paths) = rfd::FileDialog::new()
+            .add_filter("data files", &exts)
+            .pick_files()
+        else {
+            return;
+        };
+
+        let palette = &self.config.palette;
+        let loaded: Vec<Series> = paths
+            .iter()
+            .enumerate()
+            .filter_map(|(i, p)| {
+                let name = p.file_stem()?.to_string_lossy().into_owned();
+                let points = load_dat(p).ok()?;
+                let [r, g, b] = palette[i % palette.len()];
+                let color = egui::Color32::from_rgb(
+                    (r * 255.0) as u8,
+                    (g * 255.0) as u8,
+                    (b * 255.0) as u8,
+                );
+                Some(Series { name, points, color })
+            })
+            .collect();
+
+        if !loaded.is_empty() {
+            self.series = loaded;
+            self.reset_bounds = true;
+        }
     }
+}
+
+impl eframe::App for App {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        egui::CentralPanel::default().show(ctx, |ui| {
+            if ui.button("Open .dat files").clicked() {
+                self.open_files();
+            }
+            ui.add_space(10.0);
+
+            let mut plot = Plot::new("spectrum")
+                .legend(Legend::default())
+                .label_formatter(|name, value| {
+                    if name.is_empty() {
+                        format!("X: {:.1}  Y: {:.4}", value.x, value.y)
+                    } else {
+                        format!("{}\nX: {:.1}  Y: {:.4}", name, value.x, value.y)
+                    }
+                })
+                .height(ui.available_height());
+
+            if self.reset_bounds {
+                self.reset_bounds = false;
+                plot = plot.reset();
+            }
+
+            let line_width = self.config.line_width;
+            plot.show(ui, |plot_ui| {
+                for series in &self.series {
+                    plot_ui.line(
+                        Line::new(PlotPoints::new(series.points.clone()))
+                            .name(&series.name)
+                            .color(series.color)
+                            .width(line_width),
+                    );
+                }
+            });
+        });
+    }
+}
+
+fn main() {
+    let options = eframe::NativeOptions {
+        viewport: egui::ViewportBuilder::default().with_title("excel2sofia viewer"),
+        ..Default::default()
+    };
+    eframe::run_native(
+        "excel2sofia viewer",
+        options,
+        Box::new(|cc| {
+            let mut fonts = egui::FontDefinitions::default();
+            fonts.font_data.insert(
+                "FiraCode".to_owned(),
+                std::sync::Arc::new(egui::FontData::from_static(
+                    include_bytes!("../fonts/FiraCodeNerdFont-Regular.ttf"),
+                )),
+            );
+            fonts
+                .families
+                .entry(egui::FontFamily::Proportional)
+                .or_default()
+                .insert(0, "FiraCode".to_owned());
+            fonts
+                .families
+                .entry(egui::FontFamily::Monospace)
+                .or_default()
+                .insert(0, "FiraCode".to_owned());
+            cc.egui_ctx.set_fonts(fonts);
+            Ok(Box::new(App::new()))
+        }),
+    )
+    .expect("failed to run app");
 }
 
 fn load_dat(path: &Path) -> Result<Vec<[f64; 2]>, Box<dyn std::error::Error>> {

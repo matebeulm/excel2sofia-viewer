@@ -6,8 +6,8 @@ description = "Viewer for excel2sofia output files"
 repository = "https://github.com/matebeulm/excel2sofia-viewer"
 
 [dependencies]
-iced = { version = "0.14.0", features = ["canvas"] }
-iced_plot = "0.4.0"
+eframe = "0.31"
+egui_plot = "0.31"
 rfd = "0.17.2"
 serde = { version = "1", features = ["derive"] }
 toml = "0.8"
