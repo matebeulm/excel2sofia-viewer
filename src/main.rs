@@ -216,6 +216,7 @@ fn main() {
                 .or_default()
                 .insert(0, "FiraCode".to_owned());
             cc.egui_ctx.set_fonts(fonts);
+            cc.egui_ctx.set_theme(egui::ThemePreference::System);
             Ok(Box::new(App::new()))
         }),
     )
