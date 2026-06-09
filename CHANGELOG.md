@@ -11,6 +11,9 @@
 - MSI installer for Windows releases
 - macOS `.pkg` installer for macOS releases
 
+### Removed
+- Windows ARM64 (`aarch64-pc-windows-msvc`) release target — x86_64 MSI runs via emulation on ARM64 Windows
+
 ## [0.2.0] - 2026-06-09
 
 ### Added
