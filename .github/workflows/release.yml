@@ -155,7 +155,9 @@ jobs:
           APP="excel2sofia-viewer.app"
           STAGING="target/distrib/dmg-staging-$TARGET"
           mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$STAGING"
-          cp "target/$TARGET/release/excel2sofia-viewer" "$APP/Contents/MacOS/"
+          tar -xf "target/distrib/excel2sofia-viewer-$TARGET.tar.xz" \
+            --strip-components=1 -C "$APP/Contents/MacOS/" \
+            "excel2sofia-viewer-$TARGET/excel2sofia-viewer"
           cp "icons/icon.icns" "$APP/Contents/Resources/"
           sed "s/{{VERSION}}/$VERSION/g" macos/Info.plist > "$APP/Contents/Info.plist"
           cp -r "$APP" "$STAGING/"
