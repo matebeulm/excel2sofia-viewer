@@ -87,7 +87,31 @@ impl App {
         else {
             return;
         };
+        self.load_paths(paths);
+    }
 
+    fn open_folder(&mut self) {
+        let Some(folder) = rfd::FileDialog::new().pick_folder() else {
+            return;
+        };
+        let exts = &self.config.file_extensions;
+        let paths: Vec<_> = std::fs::read_dir(&folder)
+            .into_iter()
+            .flatten()
+            .filter_map(|e| e.ok())
+            .map(|e| e.path())
+            .filter(|p| {
+                p.extension()
+                    .and_then(|e| e.to_str())
+                    .map(|e| exts.iter().any(|x| x.eq_ignore_ascii_case(e)))
+                    .unwrap_or(false)
+            })
+            .collect();
+        self.load_paths(paths);
+    }
+
+    fn load_paths(&mut self, mut paths: Vec<std::path::PathBuf>) {
+        paths.sort();
         let palette = &self.config.palette;
         let loaded: Vec<Series> = paths
             .iter()
@@ -115,9 +139,14 @@ impl App {
 impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            if ui.button("Open .dat files").clicked() {
-                self.open_files();
-            }
+            ui.horizontal(|ui| {
+                if ui.button("Open .dat files").clicked() {
+                    self.open_files();
+                }
+                if ui.button("Open folder").clicked() {
+                    self.open_folder();
+                }
+            });
             ui.add_space(10.0);
 
             let mut plot = Plot::new("spectrum")
