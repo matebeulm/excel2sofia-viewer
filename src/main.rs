@@ -151,9 +151,18 @@ impl eframe::App for App {
     }
 }
 
+fn load_icon() -> egui::IconData {
+    let bytes = include_bytes!("../icons/icon_256.png");
+    let img = image::load_from_memory(bytes).expect("invalid icon").into_rgba8();
+    let (w, h) = img.dimensions();
+    egui::IconData { rgba: img.into_raw(), width: w, height: h }
+}
+
 fn main() {
     let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default().with_title("excel2sofia viewer"),
+        viewport: egui::ViewportBuilder::default()
+            .with_title("excel2sofia viewer")
+            .with_icon(load_icon()),
         ..Default::default()
     };
     eframe::run_native(
