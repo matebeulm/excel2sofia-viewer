@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.1] - 2026-06-09
+
+### Added
+- Windows ARM64 (`aarch64-pc-windows-msvc`) release target
+- Config file is now created automatically on first run at the platform config directory (`~/.config/excel2sofia-viewer/config.toml` on Linux, `~/Library/Application Support/excel2sofia-viewer/config.toml` on macOS, `%APPDATA%\excel2sofia-viewer\config.toml` on Windows)
+
 ## [0.1.0] - 2026-06-09
 
 ### Added
