@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.4] - 2026-06-09
+
+### Added
+- Catppuccin theme selector (Latte, Frappé, Macchiato, Mocha) in the toolbar; selection persists to `config.toml`
+
 ## [0.3.3] - 2026-06-09
 
 ### Changed
