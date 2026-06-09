@@ -6,11 +6,24 @@ use eframe::egui;
 use egui_plot::{Legend, Line, Plot, PlotPoints};
 use serde::{Deserialize, Serialize};
 
+#[derive(Serialize, Deserialize, PartialEq, Clone, Copy, Default)]
+#[serde(rename_all = "lowercase")]
+enum ThemeSetting {
+    #[default]
+    System,
+    Latte,
+    Frappe,
+    Macchiato,
+    Mocha,
+}
+
 #[derive(Serialize, Deserialize)]
 struct Config {
     line_width: f32,
     file_extensions: Vec<String>,
     palette: Vec<[f32; 3]>,
+    #[serde(default)]
+    theme: ThemeSetting,
 }
 
 impl Default for Config {
@@ -18,6 +31,7 @@ impl Default for Config {
         Config {
             line_width: 3.0,
             file_extensions: vec!["dat".to_string()],
+            theme: ThemeSetting::default(),
             palette: vec![
                 [0.122, 0.467, 0.706],
                 [1.000, 0.498, 0.055],
@@ -36,6 +50,12 @@ impl Default for Config {
 
 fn config_path() -> Option<std::path::PathBuf> {
     dirs::config_dir().map(|d| d.join("excel2sofia-viewer").join("config.toml"))
+}
+
+fn save_config(config: &Config) {
+    let Some(path) = config_path() else { return };
+    let content = toml::to_string(config).expect("config serialization failed");
+    let _ = std::fs::write(path, content);
 }
 
 fn load_config() -> Config {
@@ -138,6 +158,14 @@ impl App {
 
 impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        match self.config.theme {
+            ThemeSetting::System => ctx.set_theme(egui::ThemePreference::System),
+            ThemeSetting::Latte => catppuccin_egui::set_theme(ctx, catppuccin_egui::LATTE),
+            ThemeSetting::Frappe => catppuccin_egui::set_theme(ctx, catppuccin_egui::FRAPPE),
+            ThemeSetting::Macchiato => catppuccin_egui::set_theme(ctx, catppuccin_egui::MACCHIATO),
+            ThemeSetting::Mocha => catppuccin_egui::set_theme(ctx, catppuccin_egui::MOCHA),
+        }
+
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.horizontal(|ui| {
                 if ui.button("Open .dat files").clicked() {
@@ -145,6 +173,25 @@ impl eframe::App for App {
                 }
                 if ui.button("Open folder").clicked() {
                     self.open_folder();
+                }
+                let theme_before = self.config.theme;
+                egui::ComboBox::from_id_salt("theme")
+                    .selected_text(match self.config.theme {
+                        ThemeSetting::System => "System",
+                        ThemeSetting::Latte => "Latte",
+                        ThemeSetting::Frappe => "Frappé",
+                        ThemeSetting::Macchiato => "Macchiato",
+                        ThemeSetting::Mocha => "Mocha",
+                    })
+                    .show_ui(ui, |ui| {
+                        ui.selectable_value(&mut self.config.theme, ThemeSetting::System, "System");
+                        ui.selectable_value(&mut self.config.theme, ThemeSetting::Latte, "Latte");
+                        ui.selectable_value(&mut self.config.theme, ThemeSetting::Frappe, "Frappé");
+                        ui.selectable_value(&mut self.config.theme, ThemeSetting::Macchiato, "Macchiato");
+                        ui.selectable_value(&mut self.config.theme, ThemeSetting::Mocha, "Mocha");
+                    });
+                if self.config.theme != theme_before {
+                    save_config(&self.config);
                 }
             });
             ui.add_space(10.0);
@@ -216,7 +263,6 @@ fn main() {
                 .or_default()
                 .insert(0, "FiraCode".to_owned());
             cc.egui_ctx.set_fonts(fonts);
-            cc.egui_ctx.set_theme(egui::ThemePreference::System);
             Ok(Box::new(App::new()))
         }),
     )
