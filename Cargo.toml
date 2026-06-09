@@ -3,6 +3,7 @@ name = "excel2sofia-viewer"
 version = "0.1.0"
 edition = "2024"
 description = "Viewer for excel2sofia output files"
+repository = "https://github.com/matebeulm/excel2sofia-viewer"
 
 [dependencies]
 iced = { version = "0.14.0", features = ["canvas"] }
@@ -10,3 +11,8 @@ iced_plot = "0.4.0"
 rfd = "0.17.2"
 serde = { version = "1", features = ["derive"] }
 toml = "0.8"
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
