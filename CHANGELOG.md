@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.3.0] - 2026-06-09
+
+### Changed
+- Replaced iced + iced_plot with egui (eframe + egui_plot), enabling more capable plotting
+- `line_width` from `config.toml` is now applied to rendered lines (was previously unused)
+- Removed proportional downsampling workaround — no longer needed with egui_plot
+
+### Added
+- MSI installer for Windows releases
+- macOS `.pkg` installer for macOS releases
+
 ## [0.2.0] - 2026-06-09
 
 ### Added
