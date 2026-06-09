@@ -1079,7 +1079,7 @@ dependencies = [
 
 [[package]]
 name = "excel2sofia-viewer"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "dirs",
  "eframe",

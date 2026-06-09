@@ -1,6 +1,6 @@
 [package]
 name = "excel2sofia-viewer"
-version = "0.3.2"
+version = "0.3.3"
 edition = "2024"
 description = "Viewer for excel2sofia output files"
 authors = ["Matthias Eberhardt <m.eberhardt@optoneering.com>"]

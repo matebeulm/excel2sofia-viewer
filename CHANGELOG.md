@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.3] - 2026-06-09
+
+### Changed
+- App now follows the OS dark/light theme preference and updates live when the system theme changes
+
 ## [0.3.2] - 2026-06-09
 
 ### Added
