@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.2] - 2026-06-09
+
+### Added
+- "Open folder" button loads all matching files from a selected directory, sorted alphabetically — works around the macOS Cmd+A file dialog limitation
+
 ## [0.3.1] - 2026-06-09
 
 ### Added
