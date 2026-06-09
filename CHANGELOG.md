@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.5] - 2026-06-09
+
+### Added
+- Configurable x/y axis labels (default: "wavelength [nm]" and "transmission"); set via `x_label` and `y_label` in `config.toml`
+
 ## [0.3.4] - 2026-06-09
 
 ### Added
