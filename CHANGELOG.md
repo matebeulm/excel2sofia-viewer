@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.0] - 2026-06-09
+
+### Added
+- README with installation, usage, and configuration documentation
+
+### Fixed
+- Console window no longer appears on Windows
+
 ## [0.1.1] - 2026-06-09
 
 ### Added
