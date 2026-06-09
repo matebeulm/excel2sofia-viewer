@@ -3,7 +3,14 @@ name = "excel2sofia-viewer"
 version = "0.2.0"
 edition = "2024"
 description = "Viewer for excel2sofia output files"
+authors = ["Matthias Eberhardt <m.eberhardt@optoneering.com>"]
 repository = "https://github.com/matebeulm/excel2sofia-viewer"
+
+[package.metadata.wix]
+upgrade-guid = "042F94D0-7281-47FC-A5A7-CB65C4F71171"
+path-guid = "B76C2069-3629-4CE7-9DCB-EC7DA95ED488"
+license = false
+eula = false
 
 [dependencies]
 eframe = "0.31"
