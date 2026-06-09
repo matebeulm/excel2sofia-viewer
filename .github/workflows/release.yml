@@ -153,18 +153,15 @@ jobs:
           TAG="${{ needs.plan.outputs.tag }}"
           VERSION="${TAG#v}"
           APP="excel2sofia-viewer.app"
-          STAGING="target/distrib/dmg-staging-$TARGET"
-          mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$STAGING"
+          mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
           tar -xf "target/distrib/excel2sofia-viewer-$TARGET.tar.xz" \
             --strip-components=1 -C "$APP/Contents/MacOS/" \
             "excel2sofia-viewer-$TARGET/excel2sofia-viewer"
           cp "icons/icon.icns" "$APP/Contents/Resources/"
           sed "s/{{VERSION}}/$VERSION/g" macos/Info.plist > "$APP/Contents/Info.plist"
-          cp -r "$APP" "$STAGING/"
-          ln -s /Applications "$STAGING/Applications"
           hdiutil create \
             -volname "excel2sofia-viewer" \
-            -srcfolder "$STAGING" \
+            -srcfolder "$APP" \
             -ov -format UDZO \
             "target/distrib/excel2sofia-viewer-$TARGET.dmg"
       - name: Upload macOS DMG
