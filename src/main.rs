@@ -1,3 +1,9 @@
+// Source - https://stackoverflow.com/a/29764309
+// Posted by ArtemGr, modified by community. See post 'Timeline' for change history
+// Retrieved 2026-06-09, License - CC BY-SA 4.0
+
+#![windows_subsystem = "windows"]
+
 use std::path::Path;
 
 use iced::{
@@ -7,9 +13,9 @@ use iced::{
     widget::{button, column},
 };
 use iced_plot::{LineStyle, MarkerStyle, PlotUiMessage, PlotWidget, PlotWidgetBuilder, Series, ShapeId};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 struct Config {
     /// Reserved for future use — iced_plot does not yet expose line width.
     #[allow(dead_code)]
@@ -39,11 +45,28 @@ impl Default for Config {
     }
 }
 
+fn config_path() -> Option<std::path::PathBuf> {
+    dirs::config_dir().map(|d| d.join("excel2sofia-viewer").join("config.toml"))
+}
+
 fn load_config() -> Config {
-    std::fs::read_to_string("config.toml")
-        .ok()
-        .and_then(|s| toml::from_str(&s).ok())
-        .unwrap_or_default()
+    let Some(path) = config_path() else {
+        return Config::default();
+    };
+    if path.exists() {
+        std::fs::read_to_string(&path)
+            .ok()
+            .and_then(|s| toml::from_str(&s).ok())
+            .unwrap_or_default()
+    } else {
+        let config = Config::default();
+        if let Some(dir) = path.parent() {
+            let _ = std::fs::create_dir_all(dir);
+        }
+        let content = toml::to_string(&config).expect("config serialization failed");
+        let _ = std::fs::write(&path, content);
+        config
+    }
 }
 
 fn main() -> iced::Result {
