@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1] - 2026-06-09
+
+### Added
+- macOS `.dmg` installer containing a proper `.app` bundle — install by dragging to `/Applications`, making the app visible to Spotlight
+- App icon (spectral peak design) shown in the dock, taskbar, and Windows Explorer
+- Ad-hoc code signature on the macOS `.app` bundle
+
 ## [0.3.0] - 2026-06-09
 
 ### Changed
