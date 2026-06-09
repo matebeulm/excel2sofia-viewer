@@ -24,7 +24,14 @@ struct Config {
     palette: Vec<[f32; 3]>,
     #[serde(default)]
     theme: ThemeSetting,
+    #[serde(default = "default_x_label")]
+    x_label: String,
+    #[serde(default = "default_y_label")]
+    y_label: String,
 }
+
+fn default_x_label() -> String { "wavelength [nm]".to_string() }
+fn default_y_label() -> String { "transmission".to_string() }
 
 impl Default for Config {
     fn default() -> Self {
@@ -32,6 +39,8 @@ impl Default for Config {
             line_width: 3.0,
             file_extensions: vec!["dat".to_string()],
             theme: ThemeSetting::default(),
+            x_label: default_x_label(),
+            y_label: default_y_label(),
             palette: vec![
                 [0.122, 0.467, 0.706],
                 [1.000, 0.498, 0.055],
@@ -205,6 +214,8 @@ impl eframe::App for App {
                         format!("{}\nX: {:.1}  Y: {:.4}", name, value.x, value.y)
                     }
                 })
+                .x_axis_label(&self.config.x_label)
+                .y_axis_label(&self.config.y_label)
                 .height(ui.available_height());
 
             if self.reset_bounds {
