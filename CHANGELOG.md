@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.3.6] - 2026-06-10
+
+### Added
+- 3-column `.dat` files: third column is plotted as a dashed fit curve against the same x-axis, with `_fit` appended to the legend name
+
+### Fixed
+- Comment lines starting with `#` are now skipped when loading `.dat` files
+- Column separator now accepts any whitespace (tabs and spaces), not just tabs
+
 ## [0.3.5] - 2026-06-09
 
 ### Added

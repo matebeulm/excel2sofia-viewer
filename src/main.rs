@@ -3,7 +3,7 @@
 use std::path::Path;
 
 use eframe::egui;
-use egui_plot::{Legend, Line, Plot, PlotPoints};
+use egui_plot::{Legend, Line, LineStyle, Plot, PlotPoints};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, PartialEq, Clone, Copy, Default)]
@@ -91,6 +91,7 @@ struct Series {
     name: String,
     points: Vec<[f64; 2]>,
     color: egui::Color32,
+    dashed: bool,
 }
 
 struct App {
@@ -142,21 +143,22 @@ impl App {
     fn load_paths(&mut self, mut paths: Vec<std::path::PathBuf>) {
         paths.sort();
         let palette = &self.config.palette;
-        let loaded: Vec<Series> = paths
-            .iter()
-            .enumerate()
-            .filter_map(|(i, p)| {
-                let name = p.file_stem()?.to_string_lossy().into_owned();
-                let points = load_dat(p).ok()?;
-                let [r, g, b] = palette[i % palette.len()];
-                let color = egui::Color32::from_rgb(
-                    (r * 255.0) as u8,
-                    (g * 255.0) as u8,
-                    (b * 255.0) as u8,
-                );
-                Some(Series { name, points, color })
-            })
-            .collect();
+        let mut loaded: Vec<Series> = Vec::new();
+
+        for (i, p) in paths.iter().enumerate() {
+            let Some(name) = p.file_stem().map(|s| s.to_string_lossy().into_owned()) else { continue };
+            let Ok((points, fit_points)) = load_dat(p) else { continue };
+            let [r, g, b] = palette[i % palette.len()];
+            let color = egui::Color32::from_rgb(
+                (r * 255.0) as u8,
+                (g * 255.0) as u8,
+                (b * 255.0) as u8,
+            );
+            loaded.push(Series { name: name.clone(), points, color, dashed: false });
+            if let Some(fit) = fit_points {
+                loaded.push(Series { name: format!("{}_fit", name), points: fit, color, dashed: true });
+            }
+        }
 
         if !loaded.is_empty() {
             self.series = loaded;
@@ -226,12 +228,14 @@ impl eframe::App for App {
             let line_width = self.config.line_width;
             plot.show(ui, |plot_ui| {
                 for series in &self.series {
-                    plot_ui.line(
-                        Line::new(PlotPoints::new(series.points.clone()))
-                            .name(&series.name)
-                            .color(series.color)
-                            .width(line_width),
-                    );
+                    let mut line = Line::new(PlotPoints::new(series.points.clone()))
+                        .name(&series.name)
+                        .color(series.color)
+                        .width(line_width);
+                    if series.dashed {
+                        line = line.style(LineStyle::Dashed { length: 10.0 });
+                    }
+                    plot_ui.line(line);
                 }
             });
 
@@ -282,16 +286,26 @@ fn main() {
     .expect("failed to run app");
 }
 
-fn load_dat(path: &Path) -> Result<Vec<[f64; 2]>, Box<dyn std::error::Error>> {
+fn load_dat(path: &Path) -> Result<(Vec<[f64; 2]>, Option<Vec<[f64; 2]>>), Box<dyn std::error::Error>> {
     let content = std::fs::read_to_string(path)?;
-    let data = content
-        .lines()
-        .filter_map(|line| {
-            let mut parts = line.split('\t');
-            let x: f64 = parts.next()?.trim().parse().ok()?;
-            let y: f64 = parts.next()?.trim().parse().ok()?;
-            Some([x, y])
-        })
-        .collect();
-    Ok(data)
+    let mut main_data: Vec<[f64; 2]> = Vec::new();
+    let mut fit_data: Vec<[f64; 2]> = Vec::new();
+
+    for line in content.lines() {
+        if line.starts_with('#') { continue; }
+        let mut parts = line.split_ascii_whitespace();
+        let Some(x) = parts.next().and_then(|s| s.trim().parse::<f64>().ok()) else { continue };
+        let Some(y) = parts.next().and_then(|s| s.trim().parse::<f64>().ok()) else { continue };
+        main_data.push([x, y]);
+        if let Some(fit_y) = parts.next().and_then(|s| s.trim().parse::<f64>().ok()) {
+            fit_data.push([x, fit_y]);
+        }
+    }
+
+    let fit = if !fit_data.is_empty() && fit_data.len() == main_data.len() {
+        Some(fit_data)
+    } else {
+        None
+    };
+    Ok((main_data, fit))
 }
