@@ -101,12 +101,18 @@ struct App {
 }
 
 impl App {
-    fn new() -> Self {
-        App {
+    fn new(path: Option<std::path::PathBuf>) -> Self {
+        let mut app = App {
             series: Vec::new(),
             config: load_config(),
             reset_bounds: false,
+        };
+        match path {
+            Some(p) if p.is_dir() => app.load_folder(&p),
+            Some(p) => app.load_paths(vec![p]),
+            None => {}
         }
+        app
     }
 
     fn open_files(&mut self) {
@@ -124,8 +130,12 @@ impl App {
         let Some(folder) = rfd::FileDialog::new().pick_folder() else {
             return;
         };
+        self.load_folder(&folder);
+    }
+
+    fn load_folder(&mut self, folder: &Path) {
         let exts = &self.config.file_extensions;
-        let paths: Vec<_> = std::fs::read_dir(&folder)
+        let paths: Vec<_> = std::fs::read_dir(folder)
             .into_iter()
             .flatten()
             .filter_map(|e| e.ok())
@@ -252,6 +262,17 @@ fn load_icon() -> egui::IconData {
 }
 
 fn main() {
+    let path = std::env::args_os().nth(1).map(std::path::PathBuf::from);
+
+    // On Windows there is no console to print to, so a bad path just starts empty.
+    #[cfg(not(windows))]
+    if let Some(p) = &path {
+        if !p.exists() {
+            eprintln!("no such file or directory: {}", p.display());
+            std::process::exit(1);
+        }
+    }
+
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_title("excel2sofia viewer")
@@ -280,7 +301,7 @@ fn main() {
                 .or_default()
                 .insert(0, "FiraCode".to_owned());
             cc.egui_ctx.set_fonts(fonts);
-            Ok(Box::new(App::new()))
+            Ok(Box::new(App::new(path)))
         }),
     )
     .expect("failed to run app");

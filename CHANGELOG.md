@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- Command-line argument: pass a `.dat` file or a directory to load it at startup
+
 ## [0.3.6] - 2026-06-10
 
 ### Added
